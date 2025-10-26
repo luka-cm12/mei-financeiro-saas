@@ -1,209 +1,373 @@
 <?php
-/**
- * Controlador de assinatura
- */
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/SubscriptionPlan.php';
+require_once __DIR__ . '/../models/UserSubscription.php';
+require_once __DIR__ . '/../models/FeatureUsage.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
-require_once __DIR__ . '/../models/User.php';
-require_once __DIR__ . '/../models/Subscription.php';
 
 class SubscriptionController {
     private $db;
-    private $auth;
-    
+    private $conn;
+    private $authMiddleware;
+
     public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
-        $this->auth = new AuthMiddleware();
+        $this->db = new Database();
+        $this->conn = $this->db->getConnection();
+        $this->authMiddleware = new AuthMiddleware();
     }
-    
-    public function getStatus() {
-        $auth_data = $this->auth->authenticate();
-        
+
+    /**
+     * Listar todos os planos disponíveis
+     */
+    public function getPlans() {
         try {
-            $user = new User($this->db);
-            $subscription_data = $user->getSubscriptionStatus($auth_data->user_id);
+            $subscriptionPlan = new SubscriptionPlan($this->conn);
+            $stmt = $subscriptionPlan->readAll();
+            $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            if (!$subscription_data) {
+            // Formatar features e limites
+            foreach ($plans as &$plan) {
+                $plan['features'] = json_decode($plan['features'], true);
+                $plan['limits'] = json_decode($plan['limits_json'], true);
+                unset($plan['limits_json']);
+                
+                // Adicionar informações de preço formatado
+                $plan['price_formatted'] = 'R$ ' . number_format($plan['price'], 2, ',', '.');
+                $plan['is_free'] = $plan['price'] == 0;
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'data' => $plans
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao buscar planos: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Obter detalhes de um plano específico
+     */
+    public function getPlan($slug) {
+        try {
+            $subscriptionPlan = new SubscriptionPlan($this->conn);
+            $subscriptionPlan->slug = $slug;
+            
+            if (!$subscriptionPlan->readBySlug()) {
                 http_response_code(404);
-                echo json_encode(["message" => "Dados de assinatura não encontrados"]);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Plano não encontrado'
+                ]);
                 return;
             }
+
+            $plan = [
+                'id' => $subscriptionPlan->id,
+                'name' => $subscriptionPlan->name,
+                'slug' => $subscriptionPlan->slug,
+                'description' => $subscriptionPlan->description,
+                'price' => $subscriptionPlan->price,
+                'currency' => $subscriptionPlan->currency,
+                'billing_period' => $subscriptionPlan->billing_period,
+                'features' => $subscriptionPlan->features,
+                'limits' => $subscriptionPlan->limits_json,
+                'is_active' => $subscriptionPlan->is_active,
+                'price_formatted' => 'R$ ' . number_format($subscriptionPlan->price, 2, ',', '.'),
+                'is_free' => $subscriptionPlan->price == 0
+            ];
+
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'data' => $plan
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao buscar plano: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Obter assinatura atual do usuário
+     */
+    public function getCurrentSubscription() {
+        try {
+            $authResult = $this->authMiddleware->authenticate();
             
-            $is_active = false;
-            $days_remaining = 0;
+            // O AuthMiddleware retorna um objeto ou faz exit() em caso de erro
+            $userId = $authResult->user_id;
             
-            if ($subscription_data['subscription_expires_at']) {
-                $expires_at = new DateTime($subscription_data['subscription_expires_at']);
-                $now = new DateTime();
+            $userSubscription = new UserSubscription($this->conn);
+            $subscription = $userSubscription->getActiveSubscription($userId);
+            
+            if (!$subscription) {
+                // Usuário sem assinatura - mostrar plano gratuito
+                $subscriptionPlan = new SubscriptionPlan($this->conn);
+                $subscriptionPlan->slug = 'free';
                 
-                if ($expires_at > $now) {
-                    $is_active = true;
-                    $days_remaining = $expires_at->diff($now)->days;
+                if ($subscriptionPlan->readBySlug()) {
+                    $subscription = [
+                        'id' => null,
+                        'status' => 'free',
+                        'plan_name' => $subscriptionPlan->name,
+                        'plan_slug' => $subscriptionPlan->slug,
+                        'features' => $subscriptionPlan->features,
+                        'limits_json' => json_encode($subscriptionPlan->limits_json),
+                        'starts_at' => null,
+                        'ends_at' => null,
+                        'trial_ends_at' => null,
+                        'auto_renew' => false
+                    ];
                 }
             }
+
+            // Buscar estatísticas de uso
+            $featureUsage = new FeatureUsage($this->conn);
+            $usageStats = $featureUsage->getUserUsageStats($userId);
             
+            // Formatar dados
+            if (isset($subscription['features'])) {
+                $subscription['features'] = is_string($subscription['features']) 
+                    ? json_decode($subscription['features'], true) 
+                    : $subscription['features'];
+            }
+            if (isset($subscription['limits_json'])) {
+                $subscription['limits'] = is_string($subscription['limits_json']) 
+                    ? json_decode($subscription['limits_json'], true) 
+                    : $subscription['limits_json'];
+                unset($subscription['limits_json']);
+            }
+            $subscription['usage_stats'] = $usageStats;
+
+            http_response_code(200);
             echo json_encode([
-                "status" => $subscription_data['subscription_status'],
-                "expires_at" => $subscription_data['subscription_expires_at'],
-                "is_active" => $is_active,
-                "days_remaining" => $days_remaining,
-                "plan_price" => 19.90
+                'success' => true,
+                'data' => $subscription
             ]);
-            
+
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["message" => "Erro interno: " . $e->getMessage()]);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao buscar assinatura: ' . $e->getMessage()
+            ]);
         }
     }
-    
-    public function createPayment() {
-        $auth_data = $this->auth->authenticate();
-        $data = json_decode(file_get_contents("php://input"), true);
-        
+
+    /**
+     * Iniciar processo de assinatura
+     */
+    public function subscribe() {
         try {
-            // Aqui você integraria com um gateway de pagamento
-            // Por exemplo: Mercado Pago, PagSeguro, Stripe, etc.
+            $authResult = $this->authMiddleware->authenticate();
+            $userId = $authResult->user_id;
             
-            $subscription = new Subscription($this->db);
+            $data = json_decode(file_get_contents("php://input"), true);
             
-            // Criar registro de assinatura pendente
-            $subscription_id = $subscription->create([
-                'user_id' => $auth_data->user_id,
-                'plan_name' => 'MEI Financeiro Pro',
-                'amount' => 19.90,
-                'status' => 'pending',
-                'payment_method' => $data['payment_method'] ?? 'credit_card',
-                'starts_at' => date('Y-m-d'),
-                'expires_at' => date('Y-m-d', strtotime('+1 month'))
-            ]);
-            
-            // Exemplo de integração fictícia com gateway
-            $payment_response = $this->processPayment($data);
-            
-            if ($payment_response['success']) {
-                // Atualizar status da assinatura
-                $subscription->updateStatus($subscription_id, 'active');
-                
-                // Atualizar usuário
-                $user = new User($this->db);
-                $user->updateSubscription(
-                    $auth_data->user_id, 
-                    'active', 
-                    date('Y-m-d H:i:s', strtotime('+1 month'))
-                );
-                
-                echo json_encode([
-                    "success" => true,
-                    "message" => "Assinatura ativada com sucesso!",
-                    "subscription_id" => $subscription_id,
-                    "expires_at" => date('Y-m-d H:i:s', strtotime('+1 month'))
-                ]);
-            } else {
-                // Falha no pagamento
-                $subscription->updateStatus($subscription_id, 'cancelled');
-                
+            if (!isset($data['plan_slug'])) {
                 http_response_code(400);
                 echo json_encode([
-                    "success" => false,
-                    "message" => $payment_response['error'] ?? "Erro no processamento do pagamento"
+                    'success' => false,
+                    'message' => 'Plano não especificado'
                 ]);
-            }
-            
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["message" => "Erro interno: " . $e->getMessage()]);
-        }
-    }
-    
-    public function cancelSubscription() {
-        $auth_data = $this->auth->authenticate();
-        
-        try {
-            $user = new User($this->db);
-            
-            // Cancelar na data de expiração atual (não imediatamente)
-            $user->updateSubscription($auth_data->user_id, 'cancelled', null);
-            
-            echo json_encode([
-                "message" => "Assinatura cancelada. Você terá acesso até o final do período atual."
-            ]);
-            
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["message" => "Erro interno: " . $e->getMessage()]);
-        }
-    }
-    
-    public function webhookPayment() {
-        // Endpoint para receber notificações do gateway de pagamento
-        $data = json_decode(file_get_contents("php://input"), true);
-        
-        try {
-            // Verificar assinatura do webhook (segurança)
-            if (!$this->verifyWebhookSignature($data)) {
-                http_response_code(401);
-                echo json_encode(["message" => "Assinatura inválida"]);
                 return;
             }
+            $planSlug = $data['plan_slug'];
             
-            $subscription = new Subscription($this->db);
-            $user = new User($this->db);
+            // Verificar se plano existe
+            $subscriptionPlan = new SubscriptionPlan($this->conn);
+            $subscriptionPlan->slug = $planSlug;
             
-            switch ($data['event_type']) {
-                case 'payment.approved':
-                    // Pagamento aprovado
-                    $subscription->updateStatus($data['subscription_id'], 'active');
-                    $user->updateSubscription(
-                        $data['user_id'], 
-                        'active', 
-                        date('Y-m-d H:i:s', strtotime('+1 month'))
-                    );
-                    break;
-                    
-                case 'payment.rejected':
-                    // Pagamento rejeitado
-                    $subscription->updateStatus($data['subscription_id'], 'cancelled');
-                    break;
-                    
-                case 'subscription.cancelled':
-                    // Assinatura cancelada
-                    $user->updateSubscription($data['user_id'], 'cancelled', null);
-                    break;
+            if (!$subscriptionPlan->readBySlug()) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Plano não encontrado'
+                ]);
+                return;
             }
+
+            // Verificar se usuário pode trocar de plano
+            $userSubscription = new UserSubscription($this->conn);
             
-            echo json_encode(["status" => "processed"]);
+            if (!$userSubscription->canChangeSubscription($userId)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Você só pode alterar sua assinatura uma vez por semana'
+                ]);
+                return;
+            }
+
+            // Cancelar assinatura atual se existir
+            $activeSubscription = $userSubscription->getActiveSubscription($userId);
+            if ($activeSubscription) {
+                $userSubscription->id = $activeSubscription['id'];
+                $userSubscription->user_id = $userId;
+                $userSubscription->cancel();
+            }
+
+            // Se for plano gratuito, apenas cancelar o atual
+            if ($planSlug === 'free') {
+                http_response_code(200);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Plano alterado para gratuito com sucesso'
+                ]);
+                return;
+            }
+
+            // Criar nova assinatura
+            $userSubscription = new UserSubscription($this->conn);
+            $userSubscription->user_id = $userId;
+            $userSubscription->plan_id = $subscriptionPlan->id;
             
+            // Verificar se é trial ou assinatura paga
+            $isTrial = isset($data['trial']) && $data['trial'] === true;
+            
+            if ($isTrial && $subscriptionPlan->price > 0) {
+                // Criar trial de 7 dias
+                if ($userSubscription->createTrial($userId, $subscriptionPlan->id, 7)) {
+                    http_response_code(201);
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Trial iniciado com sucesso',
+                        'subscription_id' => $userSubscription->id,
+                        'trial_days' => 7
+                    ]);
+                } else {
+                    http_response_code(500);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Erro ao iniciar trial'
+                    ]);
+                }
+            } else {
+                // Assinatura paga - normalmente aqui integraria com gateway de pagamento
+                $userSubscription->status = 'pending';
+                $userSubscription->starts_at = date('Y-m-d');
+                $userSubscription->ends_at = $subscriptionPlan->billing_period === 'yearly' 
+                    ? date('Y-m-d', strtotime('+1 year'))
+                    : date('Y-m-d', strtotime('+1 month'));
+                $userSubscription->auto_renew = 1;
+                
+                if ($userSubscription->create()) {
+                    http_response_code(201);
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Assinatura criada com sucesso',
+                        'subscription_id' => $userSubscription->id,
+                        'payment_required' => true,
+                        'amount' => $subscriptionPlan->price
+                    ]);
+                } else {
+                    http_response_code(500);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Erro ao criar assinatura'
+                    ]);
+                }
+            }
+
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["message" => "Erro interno: " . $e->getMessage()]);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao processar assinatura: ' . $e->getMessage()
+            ]);
         }
     }
     
-    private function processPayment($data) {
-        // Simulação de processamento de pagamento
-        // Em produção, você integraria com um gateway real
-        
-        // Simular sucesso/falha baseado em dados do cartão (exemplo)
-        if (isset($data['card_number']) && $data['card_number'] === '4111111111111111') {
-            return [
+    /**
+     * Cancelar assinatura
+     */
+    public function cancelSubscription() {
+        try {
+            $authResult = $this->authMiddleware->authenticate();
+            $userId = $authResult->user_id;
+            
+            $userSubscription = new UserSubscription($this->conn);
+            $activeSubscription = $userSubscription->getActiveSubscription($userId);
+            
+            if (!$activeSubscription) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Nenhuma assinatura ativa encontrada'
+                ]);
+                return;
+            }
+
+            $userSubscription->id = $activeSubscription['id'];
+            $userSubscription->user_id = $userId;
+            
+            if ($userSubscription->cancel()) {
+                http_response_code(200);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Assinatura cancelada com sucesso'
+                ]);
+            } else {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao cancelar assinatura'
+                ]);
+            }
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao cancelar assinatura: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Verificar se usuário pode usar uma feature
+     */
+    public function checkFeatureAccess($featureName) {
+        try {
+            $authResult = $this->authMiddleware->authenticate();
+            $userId = $authResult->user_id;
+            
+            $subscriptionPlan = new SubscriptionPlan($this->conn);
+            $canUse = $subscriptionPlan->canUseFeature($userId, $featureName);
+            
+            $featureUsage = new FeatureUsage($this->conn);
+            $currentUsage = $featureUsage->getCurrentUsage($userId, $featureName);
+            $remainingLimit = $featureUsage->getRemainingLimit($userId, $featureName);
+
+            http_response_code(200);
+            echo json_encode([
                 'success' => true,
-                'transaction_id' => 'txn_' . uniqid(),
-                'payment_method' => $data['payment_method']
-            ];
+                'data' => [
+                    'can_use' => $canUse,
+                    'current_usage' => $currentUsage,
+                    'remaining_limit' => $remainingLimit,
+                    'is_unlimited' => $remainingLimit === -1
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erro ao verificar acesso: ' . $e->getMessage()
+            ]);
         }
-        
-        return [
-            'success' => false,
-            'error' => 'Pagamento recusado'
-        ];
-    }
-    
-    private function verifyWebhookSignature($data) {
-        // Verificação de segurança do webhook
-        // Implementar conforme o gateway utilizado
-        return true; // Simplificado para exemplo
     }
 }
 ?>

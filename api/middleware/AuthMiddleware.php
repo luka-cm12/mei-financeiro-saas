@@ -30,15 +30,15 @@ class AuthMiddleware {
         try {
             $decoded = $this->decodeJWT($token);
             
-            // Verifica se o usuário tem assinatura ativa
-            if (!$this->checkSubscription($decoded->user_id)) {
-                http_response_code(403);
-                echo json_encode([
-                    "message" => "Assinatura expirada ou inativa",
-                    "code" => "SUBSCRIPTION_EXPIRED"
-                ]);
-                exit();
-            }
+            // Verifica se o usuário tem assinatura ativa (desabilitado temporariamente)
+            // if (!$this->checkSubscription($decoded->user_id)) {
+            //     http_response_code(403);
+            //     echo json_encode([
+            //         "message" => "Assinatura expirada ou inativa",
+            //         "code" => "SUBSCRIPTION_EXPIRED"
+            //     ]);
+            //     exit();
+            // }
             
             return $decoded;
         } catch (Exception $e) {

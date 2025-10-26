@@ -1,4 +1,64 @@
 RewriteEngine On
+
+# CORS Headers for all requests
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Max-Age "3600"
+
+# Handle preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Redirect payment routes to payments.php
+RewriteRule ^payment-preference/?$ payments.php [QSA,L]
+RewriteRule ^payment-pix/?$ payments.php [QSA,L]
+RewriteRule ^subscription/?$ payments.php [QSA,L]
+RewriteRule ^subscription/cancel/?$ payments.php [QSA,L]
+RewriteRule ^payment-status/(.+)/?$ payments.php [QSA,L]
+
+# Subscription routes
+RewriteRule ^subscriptions/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/plans/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/current/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/start-trial/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/upgrade/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/cancel/?$ subscriptions.php [QSA,L]
+RewriteRule ^subscriptions/check-feature/(.+)/?$ subscriptions.php [QSA,L]
+
+# Authentication routes
+RewriteRule ^auth/login/?$ auth.php [QSA,L]
+RewriteRule ^auth/register/?$ auth.php [QSA,L]
+RewriteRule ^auth/refresh/?$ auth.php [QSA,L]
+
+# Analytics routes
+RewriteRule ^analytics/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/dashboard/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/metrics/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/churn/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/plans/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/growth/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/retention/?$ analytics.php [QSA,L]
+RewriteRule ^analytics/export/?$ analytics.php [QSA,L]
+
+# Notifications route
+RewriteRule ^run-notifications/?$ run-notifications.php [QSA,L]
+
+# Webhook route
+RewriteRule ^webhook-mercadopago/?$ webhook-mercadopago.php [QSA,L]
+
+# Protect sensitive files
+<Files "*.log">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "config/*">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Default fallback
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]

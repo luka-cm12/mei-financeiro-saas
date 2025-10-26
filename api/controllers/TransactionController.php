@@ -58,6 +58,17 @@ class TransactionController {
     }
     
     public function createTransaction() {
+        // Verificar limite de transações mensais
+        require_once __DIR__ . '/../middleware/FeatureMiddleware.php';
+        $featureMiddleware = new FeatureMiddleware($this->db);
+        
+        $featureCheck = $featureMiddleware->useFeature('transactions_per_month', 1);
+        
+        if (!$featureCheck['success']) {
+            FeatureMiddleware::sendFeatureLimitResponse($featureCheck);
+            return;
+        }
+        
         $auth_data = $this->auth->authenticate();
         $input = file_get_contents("php://input");
         $data = json_decode($input, true);
