@@ -19,13 +19,15 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'],
-      userId: json['user_id'],
-      name: json['name'],
-      type: json['type'],
-      icon: json['icon'],
-      color: json['color'],
-      createdAt: DateTime.parse(json['created_at']),
+      id: int.parse(json['id'].toString()),
+      userId: int.parse(json['user_id'].toString()),
+      name: json['name'] ?? '',
+      type: json['type'] ?? '',
+      icon: json['icon'] ?? '📊',
+      color: json['color'] ?? '#007BFF',
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
     );
   }
 

@@ -21,13 +21,13 @@ class User {
         $password_hash = password_hash($data['password'], PASSWORD_DEFAULT);
         
         // Bind dos parâmetros
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':password_hash', $password_hash);
-        $stmt->bindParam(':phone', $data['phone'] ?? null);
-        $stmt->bindParam(':business_name', $data['business_name'] ?? null);
-        $stmt->bindParam(':business_type', $data['business_type'] ?? null);
-        $stmt->bindParam(':cnpj', $data['cnpj'] ?? null);
+        $stmt->bindValue(':name', $data['name']);
+        $stmt->bindValue(':email', $data['email']);
+        $stmt->bindValue(':password_hash', $password_hash);
+        $stmt->bindValue(':phone', $data['phone'] ?? null);
+        $stmt->bindValue(':business_name', $data['business_name'] ?? null);
+        $stmt->bindValue(':business_type', $data['business_type'] ?? null);
+        $stmt->bindValue(':cnpj', $data['cnpj'] ?? null);
         
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -42,7 +42,7 @@ class User {
                   FROM " . $this->table_name . " WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
         
         return $stmt->fetch();
@@ -53,7 +53,7 @@ class User {
                   FROM " . $this->table_name . " WHERE email = :email";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':email', $email);
+        $stmt->bindValue(':email', $email);
         $stmt->execute();
         
         return $stmt->fetch();
@@ -97,9 +97,9 @@ class User {
                   WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':status', $status);
-        $stmt->bindParam(':expires_at', $expires_at);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':expires_at', $expires_at);
+        $stmt->bindValue(':id', $id);
         
         return $stmt->execute();
     }
@@ -109,7 +109,7 @@ class User {
                   FROM " . $this->table_name . " WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
         
         return $stmt->fetch();

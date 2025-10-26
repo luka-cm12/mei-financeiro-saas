@@ -158,15 +158,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         actions: [
           Consumer<TransactionProvider>(
             builder: (context, transactionProvider, child) {
-              return TextButton(
+              return IconButton(
                 onPressed: transactionProvider.isLoading ? null : _saveTransaction,
-                child: transactionProvider.isLoading
+                icon: transactionProvider.isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Salvar'),
+                    : Icon(_isEditing ? Icons.update : Icons.save),
+                tooltip: _isEditing ? 'Atualizar' : 'Salvar',
               );
             },
           ),
@@ -340,18 +344,53 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 
                 const SizedBox(height: 32),
                 
-                // Botão salvar (mobile)
-                if (MediaQuery.of(context).size.width < 600) ...[
-                  ElevatedButton(
+                // Botão salvar - sempre visível
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
                     onPressed: transactionProvider.isLoading ? null : _saveTransaction,
-                    child: Padding(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.all(16),
-                      child: transactionProvider.isLoading
-                          ? const CircularProgressIndicator()
-                          : Text(_isEditing ? 'Atualizar Transação' : 'Criar Transação'),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
+                    child: transactionProvider.isLoading
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text('Salvando...'),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(_isEditing ? Icons.update : Icons.save),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isEditing ? 'Atualizar Transação' : 'Salvar Transação',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
-                ],
+                ),
+                
+                const SizedBox(height: 16),
               ],
             ),
           );

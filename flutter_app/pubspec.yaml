@@ -38,6 +38,10 @@ dependencies:
   # Autenticação e token
   jwt_decoder: ^2.0.1
   
+  # Biometria e segurança
+  local_auth: ^2.1.6
+  crypto: ^3.0.3
+  
   # Notificações
   flutter_local_notifications: ^15.1.1
   

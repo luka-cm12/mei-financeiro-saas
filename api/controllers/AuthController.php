@@ -43,7 +43,7 @@ class AuthController {
             // Verificar se email já existe
             $query = "SELECT id FROM users WHERE email = :email";
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':email', $data['email']);
+            $stmt->bindValue(':email', $data['email']);
             $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
@@ -66,8 +66,8 @@ class AuthController {
             $trial_expires = date('Y-m-d H:i:s', strtotime('+30 days'));
             $query = "UPDATE users SET subscription_expires_at = :expires_at WHERE id = :user_id";
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':expires_at', $trial_expires);
-            $stmt->bindParam(':user_id', $user_id);
+            $stmt->bindValue(':expires_at', $trial_expires);
+            $stmt->bindValue(':user_id', $user_id);
             $stmt->execute();
             
             http_response_code(201);
@@ -98,7 +98,7 @@ class AuthController {
             $query = "SELECT id, name, email, password_hash, subscription_status, subscription_expires_at 
                       FROM users WHERE email = :email";
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':email', $data['email']);
+            $stmt->bindValue(':email', $data['email']);
             $stmt->execute();
             
             $user = $stmt->fetch();
@@ -138,7 +138,7 @@ class AuthController {
             $query = "SELECT id, name, email, subscription_status, subscription_expires_at 
                       FROM users WHERE id = :user_id";
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':user_id', $auth_data->user_id);
+            $stmt->bindValue(':user_id', $auth_data->user_id);
             $stmt->execute();
             
             $user = $stmt->fetch();

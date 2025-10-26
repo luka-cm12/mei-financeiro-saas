@@ -21,14 +21,14 @@ class Transaction {
         $transaction_date = $data['transaction_date'] ?? date('Y-m-d');
         $tags = isset($data['tags']) ? json_encode($data['tags']) : null;
         
-        $stmt->bindParam(':user_id', $data['user_id']);
-        $stmt->bindParam(':category_id', $data['category_id'] ?? null);
-        $stmt->bindParam(':type', $data['type']);
-        $stmt->bindParam(':amount', $data['amount']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':transaction_date', $transaction_date);
-        $stmt->bindParam(':payment_method', $data['payment_method'] ?? null);
-        $stmt->bindParam(':tags', $tags);
+        $stmt->bindValue(':user_id', $data['user_id']);
+        $stmt->bindValue(':category_id', $data['category_id'] ?? null);
+        $stmt->bindValue(':type', $data['type']);
+        $stmt->bindValue(':amount', $data['amount']);
+        $stmt->bindValue(':description', $data['description']);
+        $stmt->bindValue(':transaction_date', $transaction_date);
+        $stmt->bindValue(':payment_method', $data['payment_method'] ?? null);
+        $stmt->bindValue(':tags', $tags);
         
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -126,7 +126,7 @@ class Transaction {
     public function findById($id) {
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
         
         return $stmt->fetch();
@@ -164,7 +164,7 @@ class Transaction {
     public function delete($id) {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':id', $id);
         
         return $stmt->execute();
     }
@@ -183,9 +183,9 @@ class Transaction {
                   GROUP BY type";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':year', $year);
-        $stmt->bindParam(':month', $month);
+        $stmt->bindValue(':user_id', $user_id);
+        $stmt->bindValue(':year', $year);
+        $stmt->bindValue(':month', $month);
         $stmt->execute();
         
         $summary = [];
@@ -223,9 +223,9 @@ class Transaction {
                              ORDER BY total DESC";
         
         $stmt_categories = $this->conn->prepare($query_categories);
-        $stmt_categories->bindParam(':user_id', $user_id);
-        $stmt_categories->bindParam(':year', $year);
-        $stmt_categories->bindParam(':month', $month);
+        $stmt_categories->bindValue(':user_id', $user_id);
+        $stmt_categories->bindValue(':year', $year);
+        $stmt_categories->bindValue(':month', $month);
         $stmt_categories->execute();
         
         $categories = $stmt_categories->fetchAll();
@@ -243,9 +243,9 @@ class Transaction {
                         ORDER BY date";
         
         $stmt_daily = $this->conn->prepare($query_daily);
-        $stmt_daily->bindParam(':user_id', $user_id);
-        $stmt_daily->bindParam(':year', $year);
-        $stmt_daily->bindParam(':month', $month);
+        $stmt_daily->bindValue(':user_id', $user_id);
+        $stmt_daily->bindValue(':year', $year);
+        $stmt_daily->bindValue(':month', $month);
         $stmt_daily->execute();
         
         $daily_data = $stmt_daily->fetchAll();

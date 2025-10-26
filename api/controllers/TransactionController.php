@@ -59,7 +59,8 @@ class TransactionController {
     
     public function createTransaction() {
         $auth_data = $this->auth->authenticate();
-        $data = json_decode(file_get_contents("php://input"), true);
+        $input = file_get_contents("php://input");
+        $data = json_decode($input, true);
         
         // Validações
         if (!isset($data['type']) || !isset($data['amount']) || !isset($data['description'])) {
@@ -68,9 +69,19 @@ class TransactionController {
             return;
         }
         
+        // Converter tipos se necessário (suporta tanto português quanto inglês)
+        if (isset($data['type'])) {
+            if ($data['type'] === 'income') {
+                $data['type'] = 'receita';
+            } elseif ($data['type'] === 'expense') {
+                $data['type'] = 'despesa';
+            }
+            // Se já está em português, mantém como está
+        }
+        
         if (!in_array($data['type'], ['receita', 'despesa'])) {
             http_response_code(400);
-            echo json_encode(["message" => "Tipo deve ser 'receita' ou 'despesa'"]);
+            echo json_encode(["message" => "Tipo deve ser 'receita' ou 'despesa' (ou 'income'/'expense')"]);
             return;
         }
         

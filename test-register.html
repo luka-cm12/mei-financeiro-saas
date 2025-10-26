@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Criação de Conta - MEI Financeiro</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .loading { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Criação de Conta</h1>
+    <p>Use este formulário para testar se a API está funcionando corretamente.</p>
+    
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="name">Nome Completo:</label>
+            <input type="text" id="name" name="name" value="João Silva" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="" placeholder="seu@email.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" value="123456" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="business_name">Nome do Negócio:</label>
+            <input type="text" id="business_name" name="business_name" value="Meu Negócio MEI">
+        </div>
+        
+        <button type="submit">🚀 Criar Conta</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        // Gerar email aleatório
+        document.getElementById('email').value = 'teste' + Math.random().toString(36).substr(2, 9) + '@email.com';
+        
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Criando conta...</div>';
+            
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                business_name: formData.get('business_name')
+            };
+            
+            try {
+                const response = await fetch('http://localhost/mei-financeiro-saas/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Conta criada com sucesso!</h3>
+                            <p><strong>ID:</strong> ${result.user_id}</p>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p><strong>Status:</strong> ${result.subscription_status || 'trial'}</p>
+                            <p><strong>Token:</strong> ${result.token ? result.token.substring(0, 20) + '...' : 'N/A'}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Erro ao criar conta</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Mensagem:</strong> ${result.message || 'Erro desconhecido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>🚨 Erro de Conexão</h3>
+                        <p><strong>Erro:</strong> ${error.message}</p>
+                        <p><strong>Possíveis causas:</strong></p>
+                        <ul>
+                            <li>XAMPP não está rodando</li>
+                            <li>Apache ou MySQL parados</li>
+                            <li>URL da API incorreta</li>
+                            <li>Problema de CORS</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

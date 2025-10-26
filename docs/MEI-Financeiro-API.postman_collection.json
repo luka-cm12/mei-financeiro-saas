@@ -1,0 +1,325 @@
+{
+	"info": {
+		"_postman_id": "mei-financeiro-api",
+		"name": "MEI Financeiro SaaS API",
+		"description": "Collection completa para testar a API do sistema MEI Financeiro",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Status da API",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/",
+					"host": ["{{base_url}}"],
+					"path": [""]
+				},
+				"description": "Testa se a API está funcionando"
+			}
+		},
+		{
+			"name": "2. Registrar Usuário",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200 || pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.token) {",
+							"        pm.environment.set('token', jsonData.token);",
+							"        console.log('Token salvo: ' + jsonData.token);",
+							"    }",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\",\n  \"business_name\": \"João Delivery\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/register",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "register"]
+				}
+			}
+		},
+		{
+			"name": "3. Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.token) {",
+							"        pm.environment.set('token', jsonData.token);",
+							"        console.log('Token atualizado: ' + jsonData.token);",
+							"    }",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/login",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "login"]
+				}
+			}
+		},
+		{
+			"name": "4. Listar Categorias",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/categories",
+					"host": ["{{base_url}}"],
+					"path": ["categories"]
+				}
+			}
+		},
+		{
+			"name": "5. Criar Receita",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"income\",\n  \"amount\": 150.00,\n  \"description\": \"Venda de produto X\",\n  \"category_id\": 1,\n  \"date\": \"2024-10-26\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/transactions",
+					"host": ["{{base_url}}"],
+					"path": ["transactions"]
+				}
+			}
+		},
+		{
+			"name": "6. Criar Despesa",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"expense\",\n  \"amount\": 45.50,\n  \"description\": \"Almoço\",\n  \"category_id\": 2,\n  \"date\": \"2024-10-26\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/transactions",
+					"host": ["{{base_url}}"],
+					"path": ["transactions"]
+				}
+			}
+		},
+		{
+			"name": "7. Listar Transações",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/transactions?page=1&limit=10",
+					"host": ["{{base_url}}"],
+					"path": ["transactions"],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "8. Filtrar por Receitas",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/transactions?type=income",
+					"host": ["{{base_url}}"],
+					"path": ["transactions"],
+					"query": [
+						{
+							"key": "type",
+							"value": "income"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "9. Status Assinatura",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/subscription/status",
+					"host": ["{{base_url}}"],
+					"path": ["subscription", "status"]
+				}
+			}
+		},
+		{
+			"name": "10. Criar Assinatura",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"plan\": \"monthly\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/subscription/create",
+					"host": ["{{base_url}}"],
+					"path": ["subscription", "create"]
+				}
+			}
+		},
+		{
+			"name": "11. Perfil do Usuário",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/user/profile",
+					"host": ["{{base_url}}"],
+					"path": ["user", "profile"]
+				}
+			}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/mei-financeiro-saas/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

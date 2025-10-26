@@ -208,6 +208,237 @@ try {
                     echo json_encode(['message' => 'Endpoint não encontrado']);
             }
             break;
+        
+        case 'financial-goals':
+            require_once __DIR__ . '/controllers/FinancialGoalController.php';
+            $goalController = new FinancialGoalController();
+            
+            switch ($action) {
+                case 'list':
+                    if ($request_method === 'GET') {
+                        $goalController->getGoals();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'create':
+                    if ($request_method === 'POST') {
+                        $goalController->createGoal();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'update':
+                    if ($request_method === 'PUT') {
+                        $goalController->updateGoal();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'delete':
+                    if ($request_method === 'DELETE') {
+                        $goalController->deleteGoal();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'progress':
+                    if ($request_method === 'GET') {
+                        $goalController->getProgress();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['message' => 'Endpoint não encontrado']);
+            }
+            break;
+            
+        case 'reports-advanced':
+            require_once __DIR__ . '/controllers/ReportController.php';
+            $reportController = new ReportController();
+            
+            switch ($action) {
+                case 'dashboard':
+                    if ($request_method === 'GET') {
+                        $reportController->getDashboard();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'cash-flow':
+                    if ($request_method === 'GET') {
+                        $reportController->getCashFlow();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'profitability':
+                    if ($request_method === 'GET') {
+                        $reportController->getProfitability();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['message' => 'Endpoint não encontrado']);
+            }
+            break;
+            
+        case 'notifications':
+            require_once __DIR__ . '/controllers/NotificationController.php';
+            $notificationController = new NotificationController();
+            
+            switch ($action) {
+                case 'list':
+                    if ($request_method === 'GET') {
+                        $notificationController->getNotifications();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'mark-read':
+                    if ($request_method === 'PUT') {
+                        $notificationController->markAsRead();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'create':
+                    if ($request_method === 'POST') {
+                        $notificationController->createNotification();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'check-alerts':
+                    if ($request_method === 'GET') {
+                        $notificationController->checkAlerts();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['message' => 'Endpoint não encontrado']);
+            }
+            break;
+            
+        case 'backup':
+            require_once __DIR__ . '/controllers/BackupController.php';
+            $backupController = new BackupController();
+            
+            switch ($action) {
+                case 'create':
+                    if ($request_method === 'POST') {
+                        $backupController->createBackup();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'restore':
+                    if ($request_method === 'POST') {
+                        $backupController->restoreBackup();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'list':
+                    if ($request_method === 'GET') {
+                        $backupController->listBackups();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'export':
+                    if ($request_method === 'GET') {
+                        $backupController->exportData();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['message' => 'Endpoint não encontrado']);
+            }
+            break;
+            
+        case 'two-factor':
+            require_once __DIR__ . '/controllers/TwoFactorController.php';
+            $twoFactorController = new TwoFactorController();
+            
+            switch ($action) {
+                case 'settings':
+                    if ($request_method === 'GET') {
+                        $twoFactorController->getSettings();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'enable':
+                    if ($request_method === 'POST') {
+                        $twoFactorController->enableTwoFactor();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'disable':
+                    if ($request_method === 'POST') {
+                        $twoFactorController->disableTwoFactor();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'verify-biometric':
+                    if ($request_method === 'POST') {
+                        $twoFactorController->verifyBiometric();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'verify-backup':
+                    if ($request_method === 'POST') {
+                        $twoFactorController->verifyBackupCode();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                case 'regenerate-codes':
+                    if ($request_method === 'POST') {
+                        $twoFactorController->regenerateBackupCodes();
+                    } else {
+                        http_response_code(405);
+                        echo json_encode(['message' => 'Método não permitido']);
+                    }
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['message' => 'Endpoint não encontrado']);
+            }
+            break;
             
         default:
             http_response_code(404);
