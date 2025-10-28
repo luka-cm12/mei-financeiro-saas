@@ -26,10 +26,10 @@ RewriteRule ^subscriptions/upgrade/?$ subscriptions.php [QSA,L]
 RewriteRule ^subscriptions/cancel/?$ subscriptions.php [QSA,L]
 RewriteRule ^subscriptions/check-feature/(.+)/?$ subscriptions.php [QSA,L]
 
-# Authentication routes
-RewriteRule ^auth/login/?$ auth.php [QSA,L]
-RewriteRule ^auth/register/?$ auth.php [QSA,L]
-RewriteRule ^auth/refresh/?$ auth.php [QSA,L]
+# Authentication routes - redirect to index.php for routing
+RewriteRule ^auth/login/?$ index.php [QSA,L]
+RewriteRule ^auth/register/?$ index.php [QSA,L]
+RewriteRule ^auth/refresh/?$ index.php [QSA,L]
 
 # Analytics routes
 RewriteRule ^analytics/?$ analytics.php [QSA,L]
@@ -40,6 +40,12 @@ RewriteRule ^analytics/plans/?$ analytics.php [QSA,L]
 RewriteRule ^analytics/growth/?$ analytics.php [QSA,L]
 RewriteRule ^analytics/retention/?$ analytics.php [QSA,L]
 RewriteRule ^analytics/export/?$ analytics.php [QSA,L]
+
+# Establishment routes
+RewriteRule ^establishment/?$ establishment.php [QSA,L]
+RewriteRule ^establishment/search-cep/(.+)/?$ establishment.php [QSA,L]
+RewriteRule ^establishment/upload-certificate/?$ establishment.php [QSA,L]
+RewriteRule ^establishment/configure-nfce/?$ establishment.php [QSA,L]
 
 # Notifications route
 RewriteRule ^run-notifications/?$ run-notifications.php [QSA,L]

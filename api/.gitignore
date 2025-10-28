@@ -1,0 +1,14 @@
+# Ignorar certificados digitais e dados sensíveis
+storage/certificates/
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Configurações locais
+.env
+config/local.php

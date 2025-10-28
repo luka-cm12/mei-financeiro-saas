@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Sistema de Autenticação</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #005a8b;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #007cba;
+            border-bottom: 2px solid #007cba;
+            padding-bottom: 5px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Sistema de Autenticação - MEI Financeiro</h1>
+        
+        <div class="section">
+            <h2>📝 Registro de Usuário</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName">Nome Completo:</label>
+                    <input type="text" id="regName" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email:</label>
+                    <input type="email" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Senha:</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="regConfirmPassword">Confirmar Senha:</label>
+                    <input type="password" id="regConfirmPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Telefone (opcional):</label>
+                    <input type="text" id="regPhone">
+                </div>
+                <div class="form-group">
+                    <label for="regDocument">CPF/CNPJ (opcional):</label>
+                    <input type="text" id="regDocument">
+                </div>
+                <button type="submit">Registrar</button>
+            </form>
+            <div id="registerResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔑 Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Senha:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="loginResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Testes de Conectividade</h2>
+            <button onclick="testConnection()">Testar Conexão BD</button>
+            <button onclick="testRegisterEndpoint()">Testar Endpoint Registro</button>
+            <button onclick="testLoginEndpoint()">Testar Endpoint Login</button>
+            <div id="testResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/mei-financeiro-saas/api/auth';
+
+        // Registro
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('regName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                confirm_password: document.getElementById('regConfirmPassword').value,
+                phone: document.getElementById('regPhone').value,
+                document: document.getElementById('regDocument').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/register.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('registerResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = result.success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+
+                if (result.success) {
+                    document.getElementById('registerForm').reset();
+                    // Preencher campos de login
+                    document.getElementById('loginEmail').value = data.email;
+                    document.getElementById('loginPassword').value = data.password;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('registerResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Erro: ' + error.message;
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/login.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('loginResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = result.success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+
+                if (result.success) {
+                    localStorage.setItem('auth_token', result.data.token);
+                    console.log('Token salvo:', result.data.token);
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('loginResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Erro: ' + error.message;
+            }
+        });
+
+        // Testes
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/register.php?check=1`);
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = result.success ? 'result success' : 'result error';
+                resultDiv.textContent = 'Teste de Conexão:\n' + JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Erro no teste: ' + error.message;
+            }
+        }
+
+        async function testRegisterEndpoint() {
+            try {
+                const response = await fetch(`${API_BASE}/register.php`, {
+                    method: 'GET'
+                });
+                
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = response.status === 405 ? 'result success' : 'result error';
+                resultDiv.textContent = `Teste Endpoint Registro:\nStatus: ${response.status}\nResposta: ${response.statusText}`;
+            } catch (error) {
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Erro no teste: ' + error.message;
+            }
+        }
+
+        async function testLoginEndpoint() {
+            try {
+                const response = await fetch(`${API_BASE}/login.php`, {
+                    method: 'GET'
+                });
+                
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = response.status === 405 ? 'result success' : 'result error';
+                resultDiv.textContent = `Teste Endpoint Login:\nStatus: ${response.status}\nResposta: ${response.statusText}`;
+            } catch (error) {
+                const resultDiv = document.getElementById('testResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Erro no teste: ' + error.message;
+            }
+        }
+
+        // Teste automático ao carregar
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>

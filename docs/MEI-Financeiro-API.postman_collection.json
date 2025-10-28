@@ -23,14 +23,29 @@
 			"name": "2. Registrar Usuário",
 			"event": [
 				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Gerar email único e salvar para usar no login",
+							"var uniqueEmail = 'joao' + Math.floor(Math.random() * 10000) + '@email.com';",
+							"pm.environment.set('test_email', uniqueEmail);",
+							"",
+							"// Atualizar o body da request",
+							"var requestBody = JSON.parse(pm.request.body.raw);",
+							"requestBody.email = uniqueEmail;",
+							"pm.request.body.raw = JSON.stringify(requestBody);"
+						]
+					}
+				},
+				{
 					"listen": "test",
 					"script": {
 						"exec": [
 							"if (pm.response.code === 200 || pm.response.code === 201) {",
 							"    var jsonData = pm.response.json();",
-							"    if (jsonData.token) {",
-							"        pm.environment.set('token', jsonData.token);",
-							"        console.log('Token salvo: ' + jsonData.token);",
+							"    if (jsonData.data && jsonData.data.token) {",
+							"        pm.environment.set('token', jsonData.data.token);",
+							"        console.log('Token salvo: ' + jsonData.data.token);",
 							"    }",
 							"}"
 						]
@@ -47,12 +62,12 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\",\n  \"business_name\": \"João Delivery\"\n}"
+					"raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\",\n  \"confirm_password\": \"123456\",\n  \"phone\": \"11999999999\",\n  \"document\": \"11144477735\"\n}"
 				},
 				"url": {
-					"raw": "{{base_url}}/auth/register",
+					"raw": "{{base_url}}/auth/register.php",
 					"host": ["{{base_url}}"],
-					"path": ["auth", "register"]
+					"path": ["auth", "register.php"]
 				}
 			}
 		},
@@ -60,14 +75,28 @@
 			"name": "3. Login",
 			"event": [
 				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Usar o email gerado no registro",
+							"var testEmail = pm.environment.get('test_email') || 'joao@email.com';",
+							"",
+							"// Atualizar o body da request",
+							"var requestBody = JSON.parse(pm.request.body.raw);",
+							"requestBody.email = testEmail;",
+							"pm.request.body.raw = JSON.stringify(requestBody);"
+						]
+					}
+				},
+				{
 					"listen": "test",
 					"script": {
 						"exec": [
 							"if (pm.response.code === 200) {",
 							"    var jsonData = pm.response.json();",
-							"    if (jsonData.token) {",
-							"        pm.environment.set('token', jsonData.token);",
-							"        console.log('Token atualizado: ' + jsonData.token);",
+							"    if (jsonData.data && jsonData.data.token) {",
+							"        pm.environment.set('token', jsonData.data.token);",
+							"        console.log('Token atualizado: ' + jsonData.data.token);",
 							"    }",
 							"}"
 						]
@@ -87,9 +116,9 @@
 					"raw": "{\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\"\n}"
 				},
 				"url": {
-					"raw": "{{base_url}}/auth/login",
+					"raw": "{{base_url}}/auth/login.php",
 					"host": ["{{base_url}}"],
-					"path": ["auth", "login"]
+					"path": ["auth", "login.php"]
 				}
 			}
 		},
@@ -130,7 +159,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"type\": \"income\",\n  \"amount\": 150.00,\n  \"description\": \"Venda de produto X\",\n  \"category_id\": 1,\n  \"date\": \"2024-10-26\"\n}"
+					"raw": "{\n  \"type\": \"receita\",\n  \"amount\": 150.00,\n  \"description\": \"Venda de produto X\",\n  \"date\": \"2024-10-27\"\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/transactions",
@@ -155,7 +184,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"type\": \"expense\",\n  \"amount\": 45.50,\n  \"description\": \"Almoço\",\n  \"category_id\": 2,\n  \"date\": \"2024-10-26\"\n}"
+					"raw": "{\n  \"type\": \"despesa\",\n  \"amount\": 45.50,\n  \"description\": \"Almoço\",\n  \"date\": \"2024-10-27\"\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/transactions",
@@ -216,7 +245,7 @@
 					"query": [
 						{
 							"key": "type",
-							"value": "income"
+							"value": "receita"
 						}
 					]
 				}
@@ -237,9 +266,9 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/subscription/status",
+					"raw": "{{base_url}}/subscription.php",
 					"host": ["{{base_url}}"],
-					"path": ["subscription", "status"]
+					"path": ["subscription.php"]
 				}
 			}
 		},
@@ -262,9 +291,9 @@
 					"raw": "{\n  \"plan\": \"monthly\"\n}"
 				},
 				"url": {
-					"raw": "{{base_url}}/subscription/create",
+					"raw": "{{base_url}}/subscription.php",
 					"host": ["{{base_url}}"],
-					"path": ["subscription", "create"]
+					"path": ["subscription.php"]
 				}
 			}
 		},
