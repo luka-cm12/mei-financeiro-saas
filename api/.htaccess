@@ -26,10 +26,10 @@ RewriteRule ^subscriptions/upgrade/?$ subscriptions.php [QSA,L]
 RewriteRule ^subscriptions/cancel/?$ subscriptions.php [QSA,L]
 RewriteRule ^subscriptions/check-feature/(.+)/?$ subscriptions.php [QSA,L]
 
-# Authentication routes - redirect to index.php for routing
-RewriteRule ^auth/login/?$ index.php [QSA,L]
-RewriteRule ^auth/register/?$ index.php [QSA,L]
-RewriteRule ^auth/refresh/?$ index.php [QSA,L]
+# Authentication routes - direct access to PHP files
+RewriteRule ^auth/login/?$ auth/login.php [QSA,L]
+RewriteRule ^auth/register/?$ auth/register.php [QSA,L]
+RewriteRule ^auth/refresh/?$ auth/refresh.php [QSA,L]
 
 # Analytics routes
 RewriteRule ^analytics/?$ analytics.php [QSA,L]

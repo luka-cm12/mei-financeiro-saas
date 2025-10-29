@@ -7,6 +7,8 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/transaction_form_screen.dart';
+import 'screens/debug_auth_screen.dart';
+import 'screens/test_api_screen.dart';
 import 'utils/theme.dart';
 
 void main() {
@@ -36,6 +38,8 @@ class MyApp extends StatelessWidget {
           '/register': (context) => const RegisterScreen(),
           '/home': (context) => const HomeScreen(),
           '/transaction-form': (context) => const TransactionFormScreen(),
+          '/debug': (context) => const DebugAuthScreen(),
+          '/test': (context) => const TestApiScreen(),
         },
       ),
     );

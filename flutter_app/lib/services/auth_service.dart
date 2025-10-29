@@ -11,22 +11,23 @@ class AuthService {
     String? businessType,
     String? cnpj,
   }) async {
-    final response = await ApiService.post('auth/register', {
+    final response = await ApiService.post('auth/register.php', {
       'name': name,
       'email': email,
       'password': password,
+      'confirm_password': password, // Adicionando confirm_password
       'phone': phone,
       'business_name': businessName,
       'business_type': businessType,
       'cnpj': cnpj,
     });
 
-    if (response.success && response.data['token'] != null) {
-      await ApiService.saveToken(response.data['token']);
+    if (response.success && response.data['data'] != null && response.data['data']['token'] != null) {
+      await ApiService.saveToken(response.data['data']['token']);
       return AuthResult(
         success: true,
         message: response.message,
-        token: response.data['token'],
+        token: response.data['data']['token'],
         user: null, // Usuário será carregado após o login
       );
     }
@@ -43,23 +44,23 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await ApiService.post('auth/login', {
+    final response = await ApiService.post('auth/login.php', {
       'email': email,
       'password': password,
     });
 
-    if (response.success && response.data['token'] != null) {
-      await ApiService.saveToken(response.data['token']);
+    if (response.success && response.data['data'] != null && response.data['data']['token'] != null) {
+      await ApiService.saveToken(response.data['data']['token']);
       
       User? user;
-      if (response.data['user'] != null) {
-        user = User.fromJson(response.data['user']);
+      if (response.data['data']['user'] != null) {
+        user = User.fromJson(response.data['data']['user']);
       }
 
       return AuthResult(
         success: true,
         message: response.message,
-        token: response.data['token'],
+        token: response.data['data']['token'],
         user: user,
       );
     }

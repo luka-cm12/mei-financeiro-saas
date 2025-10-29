@@ -220,6 +220,34 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                
+                // Botões de debug (apenas em desenvolvimento)
+                const SizedBox(height: 20),
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/debug');
+                        },
+                        child: const Text(
+                          '🔧 Debug API',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/test');
+                        },
+                        child: const Text(
+                          '🧪 Teste Completo',
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

@@ -5,12 +5,10 @@ ob_clean();
 
 require_once '../config/Database.php';
 require_once '../middleware/AuthMiddleware.php';
+require_once '../middleware/CorsMiddleware.php';
 
-// Definir content type
-if (!headers_sent()) {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-cache, must-revalidate');
-}
+// Configurar CORS e headers
+CorsMiddleware::handle();
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
@@ -23,18 +21,24 @@ class LoginController {
     
     private function jsonResponse($data, $status_code = 200) {
         // Limpar qualquer output anterior
-        ob_clean();
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
         
-        http_response_code($status_code);
+        // Definir headers
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code($status_code);
+        }
         
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
             http_response_code(500);
             $json = json_encode([
                 'success' => false,
                 'message' => 'Erro ao gerar JSON: ' . json_last_error_msg()
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
         }
         
         echo $json;

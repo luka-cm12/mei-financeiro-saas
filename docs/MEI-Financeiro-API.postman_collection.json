@@ -47,6 +47,17 @@
 							"        pm.environment.set('token', jsonData.data.token);",
 							"        console.log('Token salvo: ' + jsonData.data.token);",
 							"    }",
+							"    if (jsonData.data && jsonData.data.user && jsonData.data.user.id) {",
+							"        pm.environment.set('user_id', jsonData.data.user.id);",
+							"        console.log('User ID salvo: ' + jsonData.data.user.id);",
+							"    }",
+							"    pm.test('Registro realizado com sucesso', function () {",
+							"        pm.expect(jsonData.success).to.be.true;",
+							"    });",
+							"} else {",
+							"    pm.test('Falha no registro', function () {",
+							"        pm.expect.fail('Status code: ' + pm.response.code);",
+							"    });",
 							"}"
 						]
 					}
@@ -98,6 +109,18 @@
 							"        pm.environment.set('token', jsonData.data.token);",
 							"        console.log('Token atualizado: ' + jsonData.data.token);",
 							"    }",
+							"    if (jsonData.data && jsonData.data.user && jsonData.data.user.id) {",
+							"        pm.environment.set('user_id', jsonData.data.user.id);",
+							"        console.log('User ID: ' + jsonData.data.user.id);",
+							"    }",
+							"    pm.test('Login realizado com sucesso', function () {",
+							"        pm.expect(jsonData.success).to.be.true;",
+							"        pm.expect(jsonData.data.token).to.not.be.empty;",
+							"    });",
+							"} else {",
+							"    pm.test('Falha no login', function () {",
+							"        pm.expect.fail('Status code: ' + pm.response.code);",
+							"    });",
 							"}"
 						]
 					}
@@ -239,7 +262,7 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/transactions?type=income",
+					"raw": "{{base_url}}/transactions?type=receita",
 					"host": ["{{base_url}}"],
 					"path": ["transactions"],
 					"query": [
@@ -317,6 +340,106 @@
 					"path": ["user", "profile"]
 				}
 			}
+		},
+		{
+			"name": "12. Atualizar Perfil",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"João Silva Atualizado\",\n  \"phone\": \"11988888888\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/user/profile",
+					"host": ["{{base_url}}"],
+					"path": ["user", "profile"]
+				}
+			}
+		},
+		{
+			"name": "13. Criar Categoria",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Alimentação\",\n  \"type\": \"despesa\",\n  \"color\": \"#FF6B6B\",\n  \"icon\": \"restaurant\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/categories",
+					"host": ["{{base_url}}"],
+					"path": ["categories"]
+				}
+			}
+		},
+		{
+			"name": "14. Relatório Mensal",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/monthly?month=10&year=2024",
+					"host": ["{{base_url}}"],
+					"path": ["reports", "monthly"],
+					"query": [
+						{
+							"key": "month",
+							"value": "10"
+						},
+						{
+							"key": "year",
+							"value": "2024"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "15. Teste de Conexão Auth",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/auth/login.php?check=1",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "login.php"],
+					"query": [
+						{
+							"key": "check",
+							"value": "1"
+						}
+					]
+				},
+				"description": "Testa se a API de autenticação está funcionando"
+			}
 		}
 	],
 	"event": [
@@ -343,12 +466,32 @@
 		{
 			"key": "base_url",
 			"value": "http://localhost/mei-financeiro-saas/api",
-			"type": "string"
+			"type": "string",
+			"description": "URL base da API - altere conforme necessário"
+		},
+		{
+			"key": "base_url_ip",
+			"value": "http://192.168.0.107/mei-financeiro-saas/api",
+			"type": "string",
+			"description": "URL com IP para testes em rede"
 		},
 		{
 			"key": "token",
 			"value": "",
-			"type": "string"
+			"type": "string",
+			"description": "Token JWT - preenchido automaticamente após login/registro"
+		},
+		{
+			"key": "test_email",
+			"value": "",
+			"type": "string",
+			"description": "Email de teste - gerado automaticamente"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string",
+			"description": "ID do usuário logado"
 		}
 	]
 }
